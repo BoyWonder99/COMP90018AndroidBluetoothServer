@@ -42,16 +42,13 @@ public class MainActivity extends AppCompatActivity {
 
     private ServerThread serverThread;
 
-    private volatile boolean isSeverRunning = false;
+    private volatile boolean isServerRunning = false;
 
     private static final int MESSAGE_RECEIVED = 0;
     private static final int CONNECTION_SUCCESSFUL = 1;
 
     InputStream ServerInStream = null;
     OutputStream ServerOutStream = null;
-
-    InputStream ClientInStream = null;
-    OutputStream ClientOutStream = null;
 
     private static android.os.Handler handler_process = new android.os.Handler(){
         public void handleMessage(Message msg){
@@ -129,6 +126,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "@ paired devices: "+device.getName());
             }
         }
+
+        // start server
+        becomeServer();
     }
 
     //Create a BroadcastRecevier for ACTION_FOUND
@@ -192,10 +192,10 @@ public class MainActivity extends AppCompatActivity {
             BluetoothSocket connectSocket = null;
             String line = "";
 
-            isSeverRunning = true;
+            isServerRunning = true;
 
             // Keep listening until exception occurs or a socket is returned.
-            while (isSeverRunning) {
+            while (isServerRunning) {
                 try {
                     Log.d(TAG, "waiting for connection");
                     connectSocket = serverSocket.accept();
@@ -220,12 +220,12 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     }
 
-                    isSeverRunning = false;
+                    isServerRunning = false;
                     break;
                 }
             }
 
-            while (isSeverRunning) {
+            while (isServerRunning) {
                 try {
                     Log.d(TAG, "do work with connection");
                     serverSocket.close();
@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
                         handler_process.sendMessage(message);
                     }
                     else {
-                        isSeverRunning = false;
+                        isServerRunning = false;
                         break;
                     }
 
@@ -276,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
                         ServerOutStream = tmpOut;
                     }
 
-                    while (isSeverRunning&&ServerInStream != null) {
+                    while (isServerRunning &&ServerInStream != null) {
 
                         BufferedReader br = new BufferedReader(new InputStreamReader(ServerInStream));
                         // readLine() read and delete one line
@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                         {
                             connectSocket.close();
                             Log.d(TAG, "quit from connection");
-                            isSeverRunning = false;
+                            isServerRunning = false;
                             break;
                         }
 
@@ -307,13 +307,23 @@ public class MainActivity extends AppCompatActivity {
                     {
                         connectSocket.close();
                         Log.d(TAG, "quit from connection");
-                        isSeverRunning = false;
+                        isServerRunning = false;
                         break;
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.d(TAG, "@ exception");
+
+
+                    Log.d(TAG, "quit from connection");
+
+                    try {
+                        connectSocket.close();
+                    } catch (Exception e2) {
+                        Log.e(TAG, "Error occurred in an exception of an exception", e2);
+                    }
+                    isServerRunning = false;
+
                     break;
                 }
 
