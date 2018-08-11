@@ -109,45 +109,16 @@ public class MainActivity extends AppCompatActivity {
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3000);
         startActivity(discoverableIntent);
 
-
-        //to start scanning whether there are any other Bluetooth devices
-        bluetoothAdapter.startDiscovery();
-
-        //register the BroadcastReceiver to broadcast discovered devices
-        filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(receiver, filter);
-
-        //return paired devices
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            // Loop through paired devices
-            for (BluetoothDevice device : pairedDevices) {
-                Log.d(TAG, "@ paired devices: "+device.getName());
-            }
-        }
-
         // start server
         becomeServer();
     }
 
-    //Create a BroadcastRecevier for ACTION_FOUND
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            //when discovery finds a device
-            if (BluetoothDevice.ACTION_FOUND.equals(action)){
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Log.d(TAG, "@ discovered devices: "+device.getName());
-            }
-        }
-    };
 
     // be a server
 
     public void becomeServer() {
+
+        Log.d(TAG, "152");
         serverThread = new ServerThread();
         serverThread.start();
     }
@@ -275,6 +246,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         ServerOutStream = tmpOut;
                     }
+
+
+                    // send data to client
+                    sendData("Server: Hello!");
+
+                    Log.d(TAG, "254");
 
                     while (isServerRunning &&ServerInStream != null) {
 
